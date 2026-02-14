@@ -1,0 +1,66 @@
+name: Terraform CI
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      # ---------------------------
+      # Configure AWS via OIDC
+      # ---------------------------
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{secrets.ACCOUNT_ID}}:role/GitHubActionsTerraformRole
+          aws-region: us-east-1
+      # ---------------------------
+      # Setup Terraform
+      # ---------------------------
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        working-directory: ./keypair
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./keypair
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: ./keypair
+      # ---------------------------
+      # TFLint (Static Analysis)
+      # ---------------------------
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+      - name: Init TFLint
+        run: tflint --init
+        working-directory: ./keypair
+      - name: Run TFLint
+        run: tflint -f compact
+        working-directory: ./keypair
+      # ---------------------------
+      # Checkov (Security Scan)
+      # ---------------------------
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+          framework: terraform
+          output_format: cli
+          quiet: true
+          soft_fail: false   # Fail pipeline if security issues found
+      # ---------------------------
+      # Terraform Plan
+      # ---------------------------
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+        working-directory: ./keypair

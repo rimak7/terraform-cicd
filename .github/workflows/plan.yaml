@@ -27,9 +27,9 @@ jobs:
       # ---------------------------
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-    #   - name: Terraform Format Check
-    #     run: terraform fmt -check -recursive
-    #     working-directory: ./keypair
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        working-directory: ./keypair
       - name: Terraform Init
         run: terraform init
         working-directory: ./keypair

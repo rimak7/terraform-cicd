@@ -16,6 +16,6 @@ resource "local_file" "private_key_pem" {
   filename = "${aws_key_pair.deployer_key.key_name}.pem"
 
   # Ensure permissions are restricted (crucial for SSH)
-#   directory_permission = "0700"
-  file_permission      = "0400"
+  #   directory_permission = "0700"
+  file_permission = "0400"
 }
